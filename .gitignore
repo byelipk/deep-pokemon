@@ -1,0 +1,5 @@
+pokemon.zip
+/tmp
+/results
+*.npy
+/utils/__pycache__/*
