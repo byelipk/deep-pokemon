@@ -1,8 +1,13 @@
 import pandas as pd
 import numpy as np
 
+from utils.read_target_label import *
+
 # Load our dataset
 pokemon = pd.read_csv("pokemon_dataset.csv")
+
+# Load target label
+target_label = read_target_label(lower=True)
 
 # Build a feature scaling pipeline.
 #
@@ -25,7 +30,7 @@ from utils.as_float import *
 # Each column except our output label can be considered
 # a "numeric" column. We can preprocess these columns in
 # the same pipeline.
-num_cols = list(pokemon.drop(['type_1'], axis=1).columns)
+num_cols = list(pokemon.drop([target_label], axis=1).columns)
 num_pipeline = Pipeline([
     ('selector', DataFrameSelector(num_cols)),
     ('imputer', Imputer(strategy="median")),
@@ -35,7 +40,7 @@ num_pipeline = Pipeline([
 ])
 
 cat_pipeline = Pipeline([
-    ('selector', DataFrameSelector(['type_1'])),
+    ('selector', DataFrameSelector([target_label])),
     ('encode', SingleLabelEncoder()),
 ])
 
