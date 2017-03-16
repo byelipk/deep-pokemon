@@ -1,5 +1,8 @@
 import tensorflow as tf
 import numpy as np
+import os
+import shutil
+
 
 X_train = np.load("training_set.npy")
 y_train = np.load("training_labels.npy")
@@ -75,7 +78,7 @@ init = tf.global_variables_initializer()
 
 # This neural network begins to completely overfit the training set
 # around 2300 iterations
-n_epochs   = 2750
+n_epochs   = 3000
 batch_size = 50
 n_batches  = int(np.ceil(m / batch_size))
 
@@ -103,14 +106,25 @@ def fetch_batch(epoch, batch_index, batch_size):
     y_batch = y_train[indices]
     return (X_batch, y_batch)
 
-# Save model checkpoints to disk
-saver = tf.train.Saver()
-tmp_dir = "./tmp/poke_model.ckpt"
-results_dir = "./results/poke_model_final.ckpt"
+# Create tmp and results directories so we can
+# save off checkpoints and the final model to disk.
+saver       = tf.train.Saver()
+tmp_dir     = "tmp"
+results_dir = "results"
+
+if os.path.isdir(tmp_dir):
+    shutil.rmtree(tmp_dir)
+
+if os.path.isdir(results_dir):
+    shutil.rmtree(results_dir)
+
+os.mkdir(tmp_dir)
+os.mkdir(results_dir)
 
 # Every 50 epochs we will test our model with clean data
 X_test = np.load("test_set.npy")
 y_test = np.load("test_labels.npy")
+
 
 with tf.Session() as sess:
     init.run()
@@ -118,7 +132,7 @@ with tf.Session() as sess:
     for epoch in range(n_epochs):
         # Save every 100 eopchs
         if epoch % 500 == 0:
-            save_path = saver.save(sess, tmp_dir)
+            save_path = saver.save(sess, tmp_dir + "/poke_model.ckpt")
 
         for batch_index in range(n_batches):
             # Find next batch then run gradient descent
@@ -132,4 +146,4 @@ with tf.Session() as sess:
             print(epoch, "Train accuracy:", acc_train, "Test accuracy:", acc_test)
 
     # Save the final model
-    save_path = saver.save(sess, results_dir)
+    save_path = saver.save(sess, results_dir + "/poke_model_final.ckpt")
