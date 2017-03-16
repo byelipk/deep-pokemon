@@ -126,6 +126,12 @@ X_test = np.load("test_set.npy")
 y_test = np.load("test_labels.npy")
 
 
+# NOTE
+# In order to monitor GPU usage in real time, use the
+# watch command with the arguments below:
+#
+#       watch -n 5 nvidia-smi -a --display=utilization
+#
 with tf.Session() as sess:
     init.run()
 
