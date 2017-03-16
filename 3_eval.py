@@ -13,10 +13,10 @@ tf.reset_default_graph()
 # Let m be the number of training examples and n the number of features.
 m, n = X_test.shape
 
-n_hidden1 = 300               # Neurons for first hidden layer
-n_hidden2 = 300               # Neurons for second hidden layer
+n_hidden1 = 50               # Neurons for first hidden layer
+n_hidden2 = 50               # Neurons for second hidden layer
 n_outputs = 18               # Output labels
-alpha = 0.01                 # The learning rate
+alpha = 0.01
 
 X = tf.placeholder(tf.float32, shape=[None, n], name="X")
 y = tf.placeholder(tf.int32, shape=[None], name="y")
