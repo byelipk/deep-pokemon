@@ -30,7 +30,7 @@ num_pipeline = Pipeline([
     ('selector', DataFrameSelector(num_cols)),
     ('imputer', Imputer(strategy="median")),
     ('std_scaler', StandardScaler()),
-    ('bias_term', AddBiasTerm()),
+    ('bias_term', AddBiasTerm(enabled=False)),
     ('as_float', AsFloat()),
 ])
 
