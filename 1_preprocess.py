@@ -77,9 +77,19 @@ training_labels = strat_train_set[:, -1].astype(np.int32)
 test_set    = strat_test_set[:, 0:-1]
 test_labels = strat_test_set[:, -1].astype(np.int32)
 
+# Split the training set into a validation set
+for train_idx, val_idx in splitter.split(training_set, training_labels):
+    validation_set    = training_set[val_idx]
+    validation_labels = training_labels[val_idx]
+    training_set    = training_set[train_idx]
+    training_labels = training_labels[train_idx]
+
 # Save our data
 np.save("training_set", training_set)
 np.save("training_labels.npy", training_labels)
+
+np.save("validation_set", validation_set)
+np.save("validation_labels.npy", validation_labels)
 
 np.save("test_set.npy", test_set)
 np.save("test_labels.npy", test_labels)

@@ -2,6 +2,7 @@ import tensorflow as tf
 import numpy as np
 import os
 import shutil
+from datetime import datetime
 
 
 X_train = np.load("training_set.npy")
@@ -13,7 +14,7 @@ tf.reset_default_graph()
 # Let m be the number of training examples and n the number of features.
 m_examples, n_features = X_train.shape
 
-n_neurons = 10               # Number of neurons in hidden layers
+n_neurons = 20               # Number of neurons in hidden layers
 n_outputs = 2                # Output labels
 alpha = 0.01                 # The learning rate
 
@@ -25,30 +26,7 @@ from tensorflow.contrib.layers import fully_connected
 
 with tf.name_scope("dnn"):
     hidden1 = fully_connected(X, n_neurons, scope="hidden1", activation_fn=tf.nn.relu)
-    hidden2 = fully_connected(hidden1, n_neurons, scope="hidden2", activation_fn=tf.nn.relu)
-    hidden3 = fully_connected(hidden2, n_neurons, scope="hidden3", activation_fn=tf.nn.relu)
-    hidden4 = fully_connected(hidden3, n_neurons, scope="hidden4", activation_fn=tf.nn.relu)
-    hidden5 = fully_connected(hidden4, n_neurons, scope="hidden5", activation_fn=tf.nn.relu)
-
-    hidden6 = fully_connected(hidden5, n_neurons, scope="hidden6", activation_fn=tf.nn.relu)
-    hidden7 = fully_connected(hidden6, n_neurons, scope="hidden7", activation_fn=tf.nn.relu)
-    hidden8 = fully_connected(hidden7, n_neurons, scope="hidden8", activation_fn=tf.nn.relu)
-    hidden9 = fully_connected(hidden8, n_neurons, scope="hidden9", activation_fn=tf.nn.relu)
-    hidden10 = fully_connected(hidden9, n_neurons, scope="hidden10", activation_fn=tf.nn.relu)
-
-    hidden11 = fully_connected(hidden10, n_neurons, scope="hidden11", activation_fn=tf.nn.relu)
-    hidden12 = fully_connected(hidden11, n_neurons, scope="hidden12", activation_fn=tf.nn.relu)
-    hidden13 = fully_connected(hidden12, n_neurons, scope="hidden13", activation_fn=tf.nn.relu)
-    hidden14 = fully_connected(hidden13, n_neurons, scope="hidden14", activation_fn=tf.nn.relu)
-    hidden15 = fully_connected(hidden14, n_neurons, scope="hidden15", activation_fn=tf.nn.relu)
-
-    hidden16 = fully_connected(hidden15, n_neurons, scope="hidden16", activation_fn=tf.nn.relu)
-    hidden17 = fully_connected(hidden16, n_neurons, scope="hidden17", activation_fn=tf.nn.relu)
-    hidden18 = fully_connected(hidden17, n_neurons, scope="hidden18", activation_fn=tf.nn.relu)
-    hidden19 = fully_connected(hidden18, n_neurons, scope="hidden19", activation_fn=tf.nn.relu)
-    hidden20 = fully_connected(hidden19, n_neurons, scope="hidden20", activation_fn=tf.nn.relu)
-
-    logits  = fully_connected(hidden15, n_outputs, scope="outputs", activation_fn=None)
+    logits  = fully_connected(hidden1, n_outputs, scope="outputs", activation_fn=None)
 
 
 # NOTE
@@ -145,8 +123,17 @@ os.mkdir(tmp_dir)
 os.mkdir(results_dir)
 
 # Every 50 epochs we will test our model with clean data
-X_test = np.load("test_set.npy")
-y_test = np.load("test_labels.npy")
+X_val = np.load("validation_set.npy")
+y_val = np.load("validation_labels.npy")
+
+# Setup log directory for Tensorboard to read from
+now = datetime.utcnow().strftime("%Y%m%d%H%M%S")
+root_log_dir = "tf_logs"
+log_dir = "{}/run-{}".format(root_log_dir, now)
+
+# Implement Tensorboard
+loss_summary   = tf.summary.scalar("ENTROPY", loss)
+summary_writer = tf.summary.FileWriter(log_dir, tf.get_default_graph())
 
 # NOTE
 # In order to monitor GPU usage in real time, use the
@@ -164,17 +151,30 @@ with tf.Session() as sess:
             X_batch, y_batch = fetch_batch(epoch, batch_index, batch_size)
             sess.run(training_op, feed_dict={X: X_batch, y: y_batch})
 
+            # Log training stats for Tensorboard
+            if batch_index % 10 == 0:
+                summary_str = loss_summary.eval(feed_dict={X: X_batch, y: y_batch})
+                step = epoch * n_batches + batch_index
+                summary_writer.add_summary(summary_str, step)
+
         if epoch % 300 == 0:
-            # Progress report
+            # Print progress report out to console
             acc_train = accuracy.eval(feed_dict={X: X_batch, y: y_batch})
-            acc_test  = accuracy.eval(feed_dict={X: X_test, y: y_test})
+            acc_val   = accuracy.eval(feed_dict={X: X_val, y: y_val})
+            print("Epoch:", epoch,
+                  "| Train acc:", acc_train,
+                  "| Validation acc:", acc_val)
 
-            print(epoch, "Train accuracy:", acc_train, "Test accuracy:", acc_test)
-
-            # Save every 300 epochs
-            # TODO only save if model is doing well
+            # TODO
+            # Right now we're saving a checkpoint every 300 epochs, but
+            # it would be better to save only if the model is doing better.
             save_path = saver.save(sess, tmp_dir + "/poke_model.ckpt")
+
+            print("====================\n")
 
 
     # Save the final model
     save_path = saver.save(sess, results_dir + "/poke_model_final.ckpt")
+
+
+print("Finished training.")
